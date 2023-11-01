@@ -1,17 +1,139 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bootstrap Website</title>
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" integrity="sha384-..." crossorigin="anonymous">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Willem Nekker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
-    
-    <!-- Your content goes here -->
-    <p>hello!</p>
-    <!-- Bootstrap JS (optional) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-..." crossorigin="anonymous"></script>
+  <div class="container my-5" style="max-width: 390px;">
+    <h2>Figure out Poker Chip Value</h2>
+    <form id="pokerForm">
+      <div class="mb-3">
+        <label for="people" class="form-label">Number of People</label>
+        <input type="number" class="form-control" id="people" required>
+      </div>
+      <div class="mb-3">
+        <label for="buyin" class="form-label">Buy-in Amount</label>
+        <input type="number" class="form-control" id="buyin" required>
+      </div>
+      <div class="mb-3">
+        <label>Select Colors</label>
+        <div id="colorRadios"></div>
+      </div>
+      <div id="colorForms"></div>
+      <button type="submit" class="btn btn-primary">Calculate</button>
+    </form>
+    <div id="result" class="mt-4"></div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('pokerForm');
+      const colors = ['Black', 'Blue', 'Red', 'White', 'Green', 'Yellow'];
+      const colorRadios = document.getElementById('colorRadios');
+      const colorForms = document.getElementById('colorForms');
+
+      colors.forEach((color) => {
+        const radioElement = `
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" value="${color}" id="${color}">
+            <label class="form-check-label" for="${color}">${color}</label>
+          </div>
+        `;
+        colorRadios.innerHTML += radioElement;
+      });
+
+      colors.forEach((color) => {
+        const formElement = `
+          <div class="mb-3 colorForm" id="${color}Form" style="display: none;">
+            <label for="${color}Chips" class="form-label">${color} Chips</label>
+            <input type="number" class="form-control" id="${color}Chips">
+            <label for="${color}Weight" class="form-label">Importance</label>
+            <select class="form-select" id="${color}Weight">
+              <option value="High">High</option>
+              <option value="HighMedium">High Medium</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="VeryLow">Very Low</option>
+            </select>
+          </div>
+        `;
+        colorForms.innerHTML += formElement;
+      });
+
+      colors.forEach((color) => {
+        document.getElementById(color).addEventListener('change', function () {
+          const form = document.getElementById(`${color}Form`);
+          this.checked ? form.style.display = 'block' : form.style.display = 'none';
+        });
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const people = parseInt(document.getElementById('people').value, 10);
+        const buyin = parseFloat(document.getElementById('buyin').value);
+        let resultHTML = '';
+        let isValid = true;
+
+        let selectedColors = colors.filter(color => document.getElementById(`${color}`).checked);
+
+        if (selectedColors.length < 2) {
+          document.getElementById('result').innerHTML = 'Error: Select at least 2 colors.';
+          return;
+        }
+
+        let weights = {
+          'High': 1,
+          'HighMedium': 0.75,
+          'Medium': 0.5,
+          'Low': 0.25,
+          'VeryLow': 0.1
+        };
+
+        if (selectedColors.length === 3) {
+          weights = {
+            'High': 1,
+            'Medium': 0.5,
+            'Low': 0.25
+          };
+        }
+
+        let totalWeight = 0;
+        selectedColors.forEach(color => {
+          const weightKey = document.getElementById(`${color}Weight`).value;
+          totalWeight += weights[weightKey];
+        });
+
+        selectedColors.forEach((color) => {
+          const chips = parseFloat(document.getElementById(`${color}Chips`).value);
+          const weightKey = document.getElementById(`${color}Weight`).value;
+          const rawValue = weights[weightKey];
+
+          if (isNaN(chips)) {
+            isValid = false;
+            return;
+          }
+
+          const perPerson = Math.ceil(chips / people);
+          const value = Math.round((buyin / totalWeight) * rawValue / perPerson);
+
+          resultHTML += `<div>${color} Chips: ${value}</div>`;
+        });
+
+        if (!isValid) {
+          resultHTML = 'Invalid input detected.';
+        }
+
+        document.getElementById('result').innerHTML = resultHTML;
+      });
+    });
+  </script>
 </body>
 </html>
